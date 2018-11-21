@@ -17,10 +17,10 @@ CREATE TABLE `prefix_user` (
 1. 下载对应平台的可执行文件, [下载地址](https://github.com/gohouse/converter/releases)
 
 2. 命令行执行
-```sh
-# 文件名: table2struct-[$platform].[$version].[$suffix]
-./table2struct-linux.v0.0.3.bin -file model.go -dsn xxx -table user
-```
+    ```sh
+    # 文件名: table2struct-[$platform].[$version].[$suffix]
+    ./table2struct-linux.v0.0.3.bin -file model.go -dsn xxx -table user
+    ```
 
 3. 参数说明
 ```sh
