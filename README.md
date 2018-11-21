@@ -22,7 +22,7 @@ CREATE TABLE `prefix_user` (
 ./table2struct-linux.v0.0.3.bin -file model.go -dsn xxx -table user
 ```
 
-## 简单用法
+## golang代码简单用法
 ```go
 package main
 import (
@@ -39,7 +39,7 @@ func main() {
 }
 ```
 
-## 详细用法示例
+## golang代码详细用法示例
 ```go
 package main
 
