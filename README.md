@@ -1,4 +1,4 @@
-a lib for golang , generate table schema to golang struct  
+a lib for golang , generate mysql table schema to golang struct  
 -----
 mysql表结构自动生成golang struct  
 
