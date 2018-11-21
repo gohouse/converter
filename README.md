@@ -22,6 +22,18 @@ CREATE TABLE `prefix_user` (
 ./table2struct-linux.v0.0.3.bin -file model.go -dsn xxx -table user
 ```
 
+3. 参数说明
+```sh
+-dsn            string 数据库dsn配置
+-enableJsonTag  bool 是否添加json的tag
+-file           string 保存路径
+-packageName    string 包名
+-prefix         string 表前缀
+-realNameMethod string 结构体对应的表名
+-table          string 要迁移的表
+-tagKey         string tag的key
+```
+
 ## golang代码简单用法
 ```go
 package main
