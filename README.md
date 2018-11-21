@@ -13,6 +13,14 @@ CREATE TABLE `prefix_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表'
 ```
 
+## 命令行用法
+1. 下载对应平台的可执行文件
+
+2. 命令行执行
+```sh
+./table2struct.linux.bin -file model.go -dsn xxx -table user
+```
+
 ## 简单用法
 ```go
 package main
