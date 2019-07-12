@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"os/exec"
 	"strings"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 //map for converting mysql type to golang types
@@ -64,9 +64,10 @@ type Table2Struct struct {
 }
 
 type T2tConfig struct {
+	StructNameToHump bool // 结构体名称是否转为驼峰式，默认为false
 	RmTagIfUcFirsted bool // 如果字段首字母本来就是大写, 就不添加tag, 默认false添加, true不添加
 	TagToLower       bool // tag的字段名字是否转换为小写, 如果本身有大写字母的话, 默认false不转
-	JsonTagToHump	 bool // json tag是否转为驼峰，默认为false，不转换
+	JsonTagToHump    bool // json tag是否转为驼峰，默认为false，不转换
 	UcFirstOnly      bool // 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
 	SeperatFile      bool // 每个struct放入单独的文件,默认false,放入同一个文件
 }
@@ -159,6 +160,10 @@ func (t *Table2Struct) Run() error {
 			tableRealName = tableRealName[len(t.prefix):]
 		}
 		tableName := tableRealName
+		structName := tableName
+		if t.config.StructNameToHump {
+			structName = t.camelCase(structName)
+		}
 
 		switch len(tableName) {
 		case 0:
@@ -169,7 +174,7 @@ func (t *Table2Struct) Run() error {
 			tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
 		}
 		depth := 1
-		structContent += "type " + tableName + " struct {\n"
+		structContent += "type " + structName + " struct {\n"
 		for _, v := range item {
 			//structContent += tab(depth) + v.ColumnName + " " + v.Type + " " + v.Json + "\n"
 			// 字段注释
@@ -250,7 +255,7 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 		WHERE table_schema = DATABASE()`
 	// 是否指定了具体的table
 	if t.table != "" {
-		sqlStr += fmt.Sprintf(" AND TABLE_NAME = '%s'", t.prefix + t.table)
+		sqlStr += fmt.Sprintf(" AND TABLE_NAME = '%s'", t.prefix+t.table)
 	}
 	// sql排序
 	sqlStr += " order by TABLE_NAME asc, ORDINAL_POSITION asc"
@@ -298,8 +303,8 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 			//} else {
 			//}
 		}
-		if t.tagKey=="" {
-			t.tagKey="orm"
+		if t.tagKey == "" {
+			t.tagKey = "orm"
 		}
 		if t.enableJsonTag {
 			//col.Json = fmt.Sprintf("`json:\"%s\" %s:\"%s\"`", col.Json, t.config.TagKey, col.Json)
