@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 //map for converting mysql type to golang types
@@ -136,6 +138,11 @@ func (t *Table2Struct) Run() error {
 		return t.err
 	}
 
+	rexNewLine, err := regexp.Compile("\r|\n")
+	if err != nil {
+		return err
+	}
+
 	// 获取表和字段的shcema
 	tableColumns, err := t.getColumns()
 	if err != nil {
@@ -180,7 +187,7 @@ func (t *Table2Struct) Run() error {
 			// 字段注释
 			var clumnComment string
 			if v.ColumnComment != "" {
-				clumnComment = fmt.Sprintf(" // %s", v.ColumnComment)
+				clumnComment = fmt.Sprintf(" // %s", rexNewLine.ReplaceAllString(v.ColumnComment, "\n//"))
 			}
 			structContent += fmt.Sprintf("%s%s %s %s%s\n",
 				tab(depth), v.ColumnName, v.Type, v.Tag, clumnComment)
