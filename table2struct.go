@@ -14,41 +14,41 @@ import (
 
 //map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
-	"int":                "int",
-	"integer":            "int",
-	"tinyint":            "int",
-	"smallint":           "int",
-	"mediumint":          "int",
-	"bigint":             "int64",
-	"int unsigned":       "int",
-	"integer unsigned":   "int",
-	"tinyint unsigned":   "int",
-	"smallint unsigned":  "int",
-	"mediumint unsigned": "int",
-	"bigint unsigned":    "int64",
-	"bit":                "int",
-	"bool":               "bool",
-	"enum":               "string",
-	"set":                "string",
-	"varchar":            "string",
-	"char":               "string",
-	"tinytext":           "string",
-	"mediumtext":         "string",
-	"text":               "string",
-	"longtext":           "string",
-	"blob":               "string",
-	"tinyblob":           "string",
-	"mediumblob":         "string",
-	"longblob":           "string",
-	"date":               "time.Time", // time.Time or string
-	"datetime":           "time.Time", // time.Time or string
-	"timestamp":          "time.Time", // time.Time or string
-	"time":               "time.Time", // time.Time or string
-	"float":              "float64",
-	"double":             "float64",
-	"decimal":            "float64",
-	"binary":             "string",
-	"varbinary":          "string",
+	"int":                "sql.NullInt32",
+	"integer":            "sql.NullInt32",
+	"tinyint":            "sql.NullInt32",
+	"smallint":           "sql.NullInt32",
+	"mediumint":          "sql.NullInt32",
+	"bigint":             "sql.NullInt64",
+	"int unsigned":       "sql.NullInt32",
+	"integer unsigned":   "sql.NullInt32",
+	"tinyint unsigned":   "sql.NullInt32",
+	"smallint unsigned":  "sql.NullInt32",
+	"mediumint unsigned": "sql.NullInt32",
+	"bigint unsigned":    "sql.NullInt64",
+	"bit":                "sql.NullInt32",
+	"bool":               "sql.NullBool",
+	"enum":               "sql.NullString",
+	"set":                "sql.NullString",
+	"varchar":            "sql.NullString",
+	"char":               "sql.NullString",
+	"tinytext":           "sql.NullString",
+	"mediumtext":         "sql.NullString",
+	"text":               "sql.NullString",
+	"longtext":           "sql.NullString",
+	"blob":               "sql.NullString",
+	"tinyblob":           "sql.NullString",
+	"mediumblob":         "sql.NullString",
+	"longblob":           "sql.NullString",
+	"date":               "sql.NullTime", // time.Time or string
+	"datetime":           "sql.NullTime", // time.Time or string
+	"timestamp":          "sql.NullTime", // time.Time or string
+	"time":               "sql.NullTime", // time.Time or string
+	"float":              "sql.NullFloat64",
+	"double":             "sql.NullFloat64",
+	"decimal":            "sql.NullFloat64",
+	"binary":             "sql.NullString",
+	"varbinary":          "sql.NullString",
 }
 
 type Table2Struct struct {
@@ -72,6 +72,7 @@ type T2tConfig struct {
 	JsonTagToHump    bool // json tag是否转为驼峰，默认为false，不转换
 	UcFirstOnly      bool // 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
 	SeperatFile      bool // 每个struct放入单独的文件,默认false,放入同一个文件
+	AutoReadRow      bool // 每个表添加从*sql.Row自动读取字段接口
 }
 
 func NewTable2Struct() *Table2Struct {
@@ -181,8 +182,9 @@ func (t *Table2Struct) Run() error {
 			tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
 		}
 		depth := 1
+		readColumnStr := ""
 		structContent += "type " + structName + " struct {\n"
-		for _, v := range item {
+		for i, v := range item {
 			//structContent += tab(depth) + v.ColumnName + " " + v.Type + " " + v.Json + "\n"
 			// 字段注释
 			var clumnComment string
@@ -190,10 +192,15 @@ func (t *Table2Struct) Run() error {
 				clumnComment = fmt.Sprintf(" // %s", rexNewLine.ReplaceAllString(v.ColumnComment, "\n// "))
 			}
 			if len(clumnComment) > 0 {
-				structContent += "\n" + clumnComment + "\n"
+				structContent += "\n" + tab(depth) + clumnComment + "\n"
 			}
 			structContent += fmt.Sprintf("%s%s %s %s\n",
 				tab(depth), v.ColumnName, v.Type, v.Tag)
+
+			readColumnStr += "&t." + v.ColumnName
+			if len(item)-1 != i {
+				readColumnStr += ","
+			}
 		}
 		structContent += tab(depth-1) + "}\n\n"
 
@@ -205,6 +212,16 @@ func (t *Table2Struct) Run() error {
 				tab(depth), tableRealName)
 			structContent += "}\n\n"
 		}
+		// 添加从*sql.Row自动读取字段接口
+		if t.config.AutoReadRow {
+			structContent += fmt.Sprintf("func (t *%s) ReadRow(row *sql.Row) error {\n",
+				structName)
+			structContent += fmt.Sprintf("%sreturn row.Scan(%s)",
+				tab(depth), readColumnStr)
+			structContent += "\n"
+			structContent += "}\n\n"
+		}
+
 		fmt.Println(structContent)
 	}
 
@@ -212,6 +229,9 @@ func (t *Table2Struct) Run() error {
 	var importContent string
 	if strings.Contains(structContent, "time.Time") {
 		importContent = "import \"time\"\n\n"
+	}
+	if strings.Contains(structContent, "sql.") {
+		importContent += "import \"database/sql\"\n\n"
 	}
 
 	// 写入文件struct
