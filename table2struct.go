@@ -187,10 +187,13 @@ func (t *Table2Struct) Run() error {
 			// 字段注释
 			var clumnComment string
 			if v.ColumnComment != "" {
-				clumnComment = fmt.Sprintf(" // %s", rexNewLine.ReplaceAllString(v.ColumnComment, "\n//"))
+				clumnComment = fmt.Sprintf(" // %s", rexNewLine.ReplaceAllString(v.ColumnComment, "\n// "))
 			}
-			structContent += fmt.Sprintf("%s%s %s %s%s\n",
-				tab(depth), v.ColumnName, v.Type, v.Tag, clumnComment)
+			if len(clumnComment) > 0 {
+				structContent += "\n" + clumnComment + "\n"
+			}
+			structContent += fmt.Sprintf("%s%s %s %s\n",
+				tab(depth), v.ColumnName, v.Type, v.Tag)
 		}
 		structContent += tab(depth-1) + "}\n\n"
 
