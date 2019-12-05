@@ -12,19 +12,19 @@ import (
 
 //map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
-	"int":                "int",
-	"integer":            "int",
-	"tinyint":            "int",
-	"smallint":           "int",
-	"mediumint":          "int",
+	"int":                "int64",
+	"integer":            "int64",
+	"tinyint":            "int64",
+	"smallint":           "int64",
+	"mediumint":          "int64",
 	"bigint":             "int64",
-	"int unsigned":       "int",
-	"integer unsigned":   "int",
-	"tinyint unsigned":   "int",
-	"smallint unsigned":  "int",
-	"mediumint unsigned": "int",
+	"int unsigned":       "int64",
+	"integer unsigned":   "int64",
+	"tinyint unsigned":   "int64",
+	"smallint unsigned":  "int64",
+	"mediumint unsigned": "int64",
 	"bigint unsigned":    "int64",
-	"bit":                "int",
+	"bit":                "int64",
 	"bool":               "bool",
 	"enum":               "string",
 	"set":                "string",
@@ -189,7 +189,7 @@ func (t *Table2Struct) Run() error {
 
 		// 添加 method 获取真实表名
 		if t.realNameMethod != "" {
-			structContent += fmt.Sprintf("func (*%s) %s() string {\n",
+			structContent += fmt.Sprintf("func (%s) %s() string {\n",
 				structName, t.realNameMethod)
 			structContent += fmt.Sprintf("%sreturn \"%s\"\n",
 				tab(depth), tableRealName)
