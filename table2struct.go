@@ -61,6 +61,7 @@ type Table2Struct struct {
 	enableJsonTag  bool   // 是否添加json的tag, 默认不添加
 	packageName    string // 生成struct的包名(默认为空的话, 则取名为: package model)
 	tagKey         string // tag字段的key值,默认是orm
+	dateToTime     bool   // 是否将 date相关字段转换为 time.Time,默认否
 }
 
 type T2tConfig struct {
@@ -118,6 +119,11 @@ func (t *Table2Struct) Prefix(p string) *Table2Struct {
 
 func (t *Table2Struct) EnableJsonTag(p bool) *Table2Struct {
 	t.enableJsonTag = p
+	return t
+}
+
+func (t *Table2Struct) DateToTime(d bool) *Table2Struct {
+	t.dateToTime = d
 	return t
 }
 
@@ -248,6 +254,13 @@ type column struct {
 
 // Function for fetching schema definition of passed table
 func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]column, err error) {
+	// 根据设置,判断是否要把 date 相关字段替换为 string
+	if t.dateToTime == false {
+		typeForMysqlToGo["date"] = "string"
+		typeForMysqlToGo["datetime"] = "string"
+		typeForMysqlToGo["timestamp"] = "string"
+		typeForMysqlToGo["time"] = "string"
+	}
 	tableColumns = make(map[string][]column)
 	// sql
 	var sqlStr = `SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,TABLE_NAME,COLUMN_COMMENT
