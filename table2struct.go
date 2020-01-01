@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -148,8 +149,6 @@ func (t *Table2Struct) Run() error {
 		return err
 	}
 
-	//fmt.Println(tableColumns)
-
 	// 包名
 	var packageName string
 	if t.packageName == "" {
@@ -218,7 +217,7 @@ func (t *Table2Struct) Run() error {
 	filePath := fmt.Sprintf("%s", savePath)
 	f, err := os.Create(filePath)
 	if err != nil {
-		fmt.Println("Can not write file")
+		log.Println("Can not write file")
 		return err
 	}
 	defer f.Close()
@@ -228,7 +227,7 @@ func (t *Table2Struct) Run() error {
 	cmd := exec.Command("gofmt", "-w", filePath)
 	cmd.Run()
 
-	fmt.Println("model finish!!!")
+	log.Println("gen model finish!!!")
 
 	return nil
 }
@@ -276,7 +275,7 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 
 	rows, err := t.db.Query(sqlStr)
 	if err != nil {
-		fmt.Println("Error reading table information: ", err.Error())
+		log.Println("Error reading table information: ", err.Error())
 		return
 	}
 
@@ -287,7 +286,7 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 		err = rows.Scan(&col.ColumnName, &col.Type, &col.Nullable, &col.TableName, &col.ColumnComment)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			return
 		}
 
