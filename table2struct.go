@@ -201,7 +201,6 @@ func (t *Table2Struct) Run() error {
 				tab(depth), tableRealName)
 			structContent += "}\n\n"
 		}
-		fmt.Println(structContent)
 	}
 
 	// 如果有引入 time.Time, 则需要引入 time 包
@@ -228,6 +227,8 @@ func (t *Table2Struct) Run() error {
 
 	cmd := exec.Command("gofmt", "-w", filePath)
 	cmd.Run()
+
+	fmt.Println("model finish!!!")
 
 	return nil
 }
