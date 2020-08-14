@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -12,20 +13,20 @@ import (
 
 //map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
-	"int":                "int",
-	"integer":            "int",
-	"tinyint":            "int",
-	"year":               "int",
-	"smallint":           "int",
-	"mediumint":          "int",
+	"int":                "int64",
+	"integer":            "int64",
+	"tinyint":            "int64",
+	"year":               "int64",
+	"smallint":           "int64",
+	"mediumint":          "int64",
 	"bigint":             "int64",
-	"int unsigned":       "int",
-	"integer unsigned":   "int",
-	"tinyint unsigned":   "int",
-	"smallint unsigned":  "int",
-	"mediumint unsigned": "int",
+	"int unsigned":       "int64",
+	"integer unsigned":   "int64",
+	"tinyint unsigned":   "int64",
+	"smallint unsigned":  "int64",
+	"mediumint unsigned": "int64",
 	"bigint unsigned":    "int64",
-	"bit":                "int",
+	"bit":                "int64",
 	"bool":               "bool",
 	"enum":               "string",
 	"set":                "string",
@@ -63,6 +64,7 @@ type Table2Struct struct {
 	enableJsonTag  bool   // 是否添加json的tag, 默认不添加
 	packageName    string // 生成struct的包名(默认为空的话, 则取名为: package model)
 	tagKey         string // tag字段的key值,默认是orm
+	dateToTime     bool   // 是否将 date相关字段转换为 time.Time,默认否
 }
 
 type T2tConfig struct {
@@ -128,6 +130,11 @@ func (t *Table2Struct) EnableJsonTag(p bool) *Table2Struct {
 	return t
 }
 
+func (t *Table2Struct) DateToTime(d bool) *Table2Struct {
+	t.dateToTime = d
+	return t
+}
+
 func (t *Table2Struct) Config(c *T2tConfig) *Table2Struct {
 	t.config = c
 	return t
@@ -148,8 +155,6 @@ func (t *Table2Struct) Run() error {
 	if err != nil {
 		return err
 	}
-
-	//fmt.Println(tableColumns)
 
 	// 包名
 	var packageName string
@@ -282,13 +287,12 @@ func (t *Table2Struct) Run() error {
 
 		// 添加 method 获取真实表名
 		if t.realNameMethod != "" {
-			structContent += fmt.Sprintf("func (*%s) %s() string {\n",
+			structContent += fmt.Sprintf("func (%s) %s() string {\n",
 				structName, t.realNameMethod)
 			structContent += fmt.Sprintf("%sreturn \"%s\"\n",
 				tab(depth), tableRealName)
 			structContent += "}\n\n"
 		}
-		fmt.Println(structContent)
 	}
 
 	// 如果有引入 time.Time, 则需要引入 time 包
@@ -306,7 +310,7 @@ func (t *Table2Struct) Run() error {
 	filePath := fmt.Sprintf("%s", saveFile)
 	f, err := os.Create(filePath)
 	if err != nil {
-		fmt.Println("Can not write file")
+		log.Println("Can not write file")
 		return err
 	}
 	defer f.Close()
@@ -315,6 +319,8 @@ func (t *Table2Struct) Run() error {
 
 	cmd := exec.Command("gofmt", "-w", filePath)
 	cmd.Run()
+
+	log.Println("gen model finish!!!")
 
 	return nil
 }
@@ -341,6 +347,13 @@ type column struct {
 
 // Function for fetching schema definition of passed table
 func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]column, err error) {
+	// 根据设置,判断是否要把 date 相关字段替换为 string
+	if t.dateToTime == false {
+		typeForMysqlToGo["date"] = "string"
+		typeForMysqlToGo["datetime"] = "string"
+		typeForMysqlToGo["timestamp"] = "string"
+		typeForMysqlToGo["time"] = "string"
+	}
 	tableColumns = make(map[string][]column)
 	// sql
 	var sqlStr = `SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,TABLE_NAME,COLUMN_COMMENT
@@ -362,7 +375,7 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 
 	rows, err := t.db.Query(sqlStr)
 	if err != nil {
-		fmt.Println("Error reading table information: ", err.Error())
+		log.Println("Error reading table information: ", err.Error())
 		return
 	}
 
@@ -373,7 +386,7 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 		err = rows.Scan(&col.ColumnName, &col.Type, &col.Nullable, &col.TableName, &col.ColumnComment)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			return
 		}
 
