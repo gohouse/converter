@@ -78,8 +78,12 @@ func main() {
 		// 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
 		UcFirstOnly: false,
 		//// 每个struct放入单独的文件,默认false,放入同一个文件(暂未提供)
-		//SeperatFile: false,
+		SeperatFile: true,
+		// 结构体名称是否转为驼峰式，默认为false
+		StructNameToHump: true,
 	})
+
+	file.CreateDateDir("./model")
 	// 开始迁移转换
 	err := t2t.
 		// 指定某个表,如果不指定,则默认全部表都迁移
@@ -95,7 +99,7 @@ func main() {
 		// 是否添加结构体方法获取表名
 		RealNameMethod("TableName").
 		// 生成的结构体保存路径
-		SavePath("/Users/fizz/go/src/github.com/gohouse/gupiao/model/model.go").
+		SavePath("./model").
 		// 数据库dsn,这里可以使用 t2t.DB() 代替,参数为 *sql.DB 对象
 		Dsn("root:root@tcp(localhost:3306)/test?charset=utf8").
 		// 执行

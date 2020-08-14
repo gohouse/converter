@@ -16,6 +16,7 @@ var typeForMysqlToGo = map[string]string{
 	"int":                "int64",
 	"integer":            "int64",
 	"tinyint":            "int64",
+	"year":               "int64",
 	"smallint":           "int64",
 	"mediumint":          "int64",
 	"bigint":             "int64",
@@ -53,8 +54,9 @@ var typeForMysqlToGo = map[string]string{
 type Table2Struct struct {
 	dsn            string
 	savePath       string
+	saveFile       string
 	db             *sql.DB
-	table          string
+	table          []string
 	prefix         string
 	config         *T2tConfig
 	err            error
@@ -103,13 +105,18 @@ func (t *Table2Struct) SavePath(p string) *Table2Struct {
 	return t
 }
 
+func (t *Table2Struct) SaveFile(p string) *Table2Struct {
+	t.saveFile = p
+	return t
+}
+
 func (t *Table2Struct) DB(d *sql.DB) *Table2Struct {
 	t.db = d
 	return t
 }
 
 func (t *Table2Struct) Table(tab string) *Table2Struct {
-	t.table = tab
+	t.table = append(t.table, tab)
 	return t
 }
 
@@ -155,6 +162,92 @@ func (t *Table2Struct) Run() error {
 		packageName = "package model\n\n"
 	} else {
 		packageName = fmt.Sprintf("package %s\n\n", t.packageName)
+	}
+
+	if t.config.SeperatFile {
+		// 写入文件struct
+		var savePath = t.savePath
+		// 是否指定保存路径
+		if savePath == "" {
+			savePath = "./model"
+		}
+
+		for tableRealName, item := range tableColumns {
+			fmt.Printf("%v: %+v\n", tableRealName, item)
+
+			err := (func(tableRealName string, item []column) error {
+				// 组装struct
+				var structContent string
+
+				// 去除前缀
+				if t.prefix != "" {
+					tableRealName = tableRealName[len(t.prefix):]
+				}
+				tableName := tableRealName
+				structName := tableName
+				if t.config.StructNameToHump {
+					structName = t.camelCase(structName)
+				}
+
+				switch len(tableName) {
+				case 0:
+				case 1:
+					tableName = strings.ToUpper(tableName[0:1])
+				default:
+					// 字符长度大于1时
+					tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
+				}
+				depth := 1
+				structContent += "type " + structName + " struct {\n"
+				for _, v := range item {
+					//structContent += tab(depth) + v.ColumnName + " " + v.Type + " " + v.Json + "\n"
+
+					// 字段注释
+					var clumnComment string
+					if v.ColumnComment != "" {
+						clumnComment = fmt.Sprintf(" // %s", v.ColumnComment)
+					}
+					structContent += fmt.Sprintf("%s%s %s %s%s\n",
+						tab(depth), v.ColumnName, v.Type, v.Tag, clumnComment)
+				}
+				structContent += tab(depth-1) + "}\n\n"
+
+				// 添加 method 获取真实表名
+				if t.realNameMethod != "" {
+					structContent += fmt.Sprintf("func (*%s) %s() string {\n",
+						structName, t.realNameMethod)
+					structContent += fmt.Sprintf("%sreturn \"%s\"\n",
+						tab(depth), tableRealName)
+					structContent += "}\n\n"
+				}
+				fmt.Println(structContent)
+
+				// 如果有引入 time.Time, 则需要引入 time 包
+				var importContent string
+				if strings.Contains(structContent, "time.Time") {
+					importContent = "import \"time\"\n\n"
+				}
+
+				filePath := fmt.Sprintf("%s", savePath+"/"+"model_"+structName+".go")
+				f, err := os.Create(filePath)
+				if err != nil {
+					fmt.Println("Can not write file")
+					return err
+				}
+				defer f.Close()
+
+				f.WriteString(packageName + importContent + structContent)
+
+				cmd := exec.Command("gofmt", "-w", filePath)
+				cmd.Run()
+
+				return nil
+			})(tableRealName, item)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	// 组装struct
@@ -209,12 +302,12 @@ func (t *Table2Struct) Run() error {
 	}
 
 	// 写入文件struct
-	var savePath = t.savePath
+	var saveFile = t.saveFile
 	// 是否指定保存路径
-	if savePath == "" {
-		savePath = "model.go"
+	if saveFile == "" {
+		saveFile = "./model/model.go"
 	}
-	filePath := fmt.Sprintf("%s", savePath)
+	filePath := fmt.Sprintf("%s", saveFile)
 	f, err := os.Create(filePath)
 	if err != nil {
 		log.Println("Can not write file")
@@ -267,8 +360,15 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 		FROM information_schema.COLUMNS 
 		WHERE table_schema = DATABASE()`
 	// 是否指定了具体的table
-	if t.table != "" {
-		sqlStr += fmt.Sprintf(" AND TABLE_NAME = '%s'", t.prefix+t.table)
+	if len(t.table) > 0 {
+		tmpStr := ""
+		for k, tab := range t.table {
+			tmpStr = tmpStr + "'" + t.prefix + tab + "'"
+			if k < len(t.table)-1 {
+				tmpStr = tmpStr + ","
+			}
+		}
+		sqlStr += fmt.Sprintf(" AND TABLE_NAME IN (%s)", tmpStr)
 	}
 	// sql排序
 	sqlStr += " order by TABLE_NAME asc, ORDINAL_POSITION asc"
