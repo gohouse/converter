@@ -212,7 +212,7 @@ func (t *Table2Struct) Run() error {
 
 	// 添加json类型支持
 	if strings.Contains(structContent, "json.RawMessage") {
-		importContent = "import \"encoding/json\"\n\n"
+		importContent += "import \"encoding/json\"\n\n"
 	}
 
 	// 写入文件struct
