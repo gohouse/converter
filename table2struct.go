@@ -170,6 +170,7 @@ func (t *Table2Struct) Run() error {
 			structName = t.camelCase(structName)
 		}
 
+		/*
 		switch len(tableName) {
 		case 0:
 		case 1:
@@ -178,6 +179,8 @@ func (t *Table2Struct) Run() error {
 			// 字符长度大于1时
 			tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
 		}
+		*/
+		tableName = t.camelCase(tableName)
 		depth := 1
 		structContent += "type " + structName + " struct {\n"
 		for _, v := range item {
