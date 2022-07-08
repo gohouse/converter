@@ -170,14 +170,15 @@ func (t *Table2Struct) Run() error {
 			structName = t.camelCase(structName)
 		}
 
-		switch len(tableName) {
-		case 0:
-		case 1:
-			tableName = strings.ToUpper(tableName[0:1])
-		default:
-			// 字符长度大于1时
-			tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
-		}
+// 		switch len(tableName) {
+// 		case 0:
+// 		case 1:
+// 			tableName = strings.ToUpper(tableName[0:1])
+// 		default:
+// 			// 字符长度大于1时
+// 			tableName = strings.ToUpper(tableName[0:1]) + tableName[1:]
+// 		}
+		_, _, _, tableName = stringHandle(tableName)
 		depth := 1
 		structContent += "type " + structName + " struct {\n"
 		for _, v := range item {
@@ -360,4 +361,21 @@ func (t *Table2Struct) camelCase(str string) string {
 }
 func tab(depth int) string {
 	return strings.Repeat("\t", depth)
+}
+// 处理名称大小写 a_b_c
+func stringHandle(x string) (x_y, xy, xY, XY string) {
+	y := strings.Split(x, "_")
+	x_y = x
+	for i := 0; i < len(y); i++ {
+		// 连接
+		xy += y[i]
+		// 首字母大写
+		if i != 0 {
+			y[i] = strings.ToUpper(y[i][:1]) + y[i][1:]
+		}
+		xY += y[i]
+		y[i] = strings.ToUpper(y[i][:1]) + y[i][1:]
+		XY += y[i]
+	}
+	return
 }
