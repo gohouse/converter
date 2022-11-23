@@ -216,9 +216,10 @@ func (t *Table2Struct) Run() error {
 	}
 
 	if t.config.SeperatFile {
+		log.Println("gen model finish!!!")
 		return nil
 	}
-
+	
 	// 如果有引入 time.Time, 则需要引入 time 包
 	var importContent string
 	if strings.Contains(structContent, "time.Time") {
@@ -383,7 +384,7 @@ func tab(depth int) string {
 	return strings.Repeat("\t", depth)
 }
 
-func saveResult(packageName string, structContent string, t *Table2Struct, tableRealName string) error {
+func saveResult(packageName string, structContent string, t *Table2Struct, fileName string) error {
 	// 如果有引入 time.Time, 则需要引入 time 包
 	var importContent string
 	if strings.Contains(structContent, "time.Time") {
@@ -393,11 +394,7 @@ func saveResult(packageName string, structContent string, t *Table2Struct, table
 	// 写入文件struct
 	var savePath = t.savePath
 	// 是否指定保存路径
-
-	// if savePath == "" {
-	// 	savePath = tableRealName+".go"
-	// }
-	savePath = savePath + tableRealName + ".go"
+	savePath = filepath.Join(savePath, fileName+".go")
 	filePath := fmt.Sprintf("%s", savePath)
 	f, err := os.Create(filePath)
 	if err != nil {

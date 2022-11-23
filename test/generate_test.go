@@ -18,7 +18,7 @@ func TestGenerateTest(t *testing.T) {
 		// 字段首字母大写的同时, 是否要把其他字母转换为小写,默认false不转换
 		UcFirstOnly: true,
 		//// 每个struct放入单独的文件,默认false,放入同一个文件
-		SeperatFile: true,
+		SeperatFile: false,
 		 // struct 转驼峰命名,默认false
 		StructNameToHump: true,  
 		// json tag是否转为驼峰，默认为false，不转换
@@ -47,7 +47,8 @@ func TestGenerateTest(t *testing.T) {
 		// 是否添加结构体方法获取表名
 		RealNameMethod("TableName").
 		// 生成的结构体保存路径 
-		SavePath("E:\\golang\\rui_ji\\models\\").
+		SavePath("E:\\golang\\rui_ji\\models").
+		// SavePath("E:\\golang\\rui_ji\\models").
 		// 数据库dsn,这里可以使用 t2t.DB() 代替,参数为 *sql.DB 对象
 		Dsn("root:1233211234567@tcp(localhost:3306)/reggie?charset=utf8").
 		// 执行
