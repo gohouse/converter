@@ -1,13 +1,14 @@
 a lib for golang , generate mysql table schema to golang struct  
+fork from github.com/Summer1121/converter v0.0.3
 -----
 mysql表结构自动生成golang struct  
 
 ## github地址
-[https://github.com/gohouse/converter](https://github.com/gohouse/converter)
+[https://github.com/Summer1121/converter](https://github.com/Summer1121/converter)
 
 ## 安装
-1. 直接下载可执行文件: [下载地址](https://github.com/gohouse/converter/releases)  
-2. golang源码包: `go get github.com/gohouse/converter`
+1. 直接下载可执行文件: [下载地址](https://github.com/Summer1121/converter/releases)  
+2. golang源码包: `go get github.com/Summer1121/converter`
 
 ## 示例表结构
 ```sql
@@ -21,7 +22,7 @@ CREATE TABLE `prefix_user` (
 ```
 
 ## 命令行用法
-1. 下载对应平台的可执行文件, [下载地址](https://github.com/gohouse/converter/releases)
+1. 下载对应平台的可执行文件, [下载地址](https://github.com/Summer1121/converter/releases)
 
 2. 命令行执行
     ```sh
@@ -46,7 +47,7 @@ CREATE TABLE `prefix_user` (
 package main
 import (
 	"fmt"
-	"github.com/gohouse/converter"
+	"github.com/Summer1121/converter"
 )
 func main() {
 	err := converter.NewTable2Struct().
@@ -63,7 +64,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/gohouse/converter"
+	"github.com/Summer1121/converter"
 )
 
 func main() {
