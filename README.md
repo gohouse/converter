@@ -88,6 +88,8 @@ func main() {
 		Prefix("prefix_").
 		// 是否添加json tag
 		EnableJsonTag(true).
+		// 字段是否使用指针类型，默认是false
+		Table2Struct(false).
 		// 生成struct的包名(默认为空的话, 则取名为: package model)
 		PackageName("model").
 		// tag字段的key值,默认是orm
