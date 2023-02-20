@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/gohouse/converter"
 	"log"
+
+	"github.com/Summer1121/converter"
 )
 
 func main() {
@@ -19,6 +20,7 @@ func parser() {
 	packageName := flag.String("packageName", "model", "生成的struct包名")
 	tagKey := flag.String("tagKey", "orm", "字段tag的key")
 	prefix := flag.String("prefix", "", "表前缀")
+	fieldAsPtr := flag.Bool("fieldAsPtr", false, "使用指针类型")
 	version := flag.Bool("version", false, "版本号")
 	v := flag.Bool("v", false, "版本号")
 	enableJsonTag := flag.Bool("enableJsonTag", false, "是否添加json的tag,默认false")
@@ -61,6 +63,8 @@ func parser() {
 		Prefix(*prefix).
 		// 是否添加json tag
 		EnableJsonTag(*enableJsonTag).
+		// 字段是否使用指针类型
+		Table2Struct(*fieldAsPtr).
 		// 生成struct的包名(默认为空的话, 则取名为: package model)
 		PackageName(*packageName).
 		// tag字段的key值,默认是orm

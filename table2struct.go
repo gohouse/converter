@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-//map for converting mysql type to golang types
+// map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
 	"int":                "int64",
 	"integer":            "int64",
@@ -63,6 +64,7 @@ type Table2Struct struct {
 	packageName    string // 生成struct的包名(默认为空的话, 则取名为: package model)
 	tagKey         string // tag字段的key值,默认是orm
 	dateToTime     bool   // 是否将 date相关字段转换为 time.Time,默认否
+	fieldAsPtr     bool   // 是否将字段设置为指针类型，默认否
 }
 
 type T2tConfig struct {
@@ -130,6 +132,11 @@ func (t *Table2Struct) DateToTime(d bool) *Table2Struct {
 
 func (t *Table2Struct) Config(c *T2tConfig) *Table2Struct {
 	t.config = c
+	return t
+}
+
+func (t *Table2Struct) Table2Struct(c bool) *Table2Struct {
+	t.fieldAsPtr = c
 	return t
 }
 
@@ -295,6 +302,10 @@ func (t *Table2Struct) getColumns(table ...string) (tableColumns map[string][]co
 		col.ColumnComment = col.ColumnComment
 		col.ColumnName = t.camelCase(col.ColumnName)
 		col.Type = typeForMysqlToGo[col.Type]
+		// 如果指定字段为指针类型，则转为指针类型
+		if t.fieldAsPtr {
+			col.Type = "*" + col.Type
+		}
 		jsonTag := col.Tag
 		// 字段首字母本身大写, 是否需要删除tag
 		if t.config.RmTagIfUcFirsted &&
