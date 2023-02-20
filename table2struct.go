@@ -135,7 +135,7 @@ func (t *Table2Struct) Config(c *T2tConfig) *Table2Struct {
 	return t
 }
 
-func (t *Table2Struct) Table2Struct(c bool) *Table2Struct {
+func (t *Table2Struct) FieldAsPtr(c bool) *Table2Struct {
 	t.fieldAsPtr = c
 	return t
 }
