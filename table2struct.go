@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 //map for converting mysql type to golang types
@@ -48,6 +49,7 @@ var typeForMysqlToGo = map[string]string{
 	"decimal":            "float64",
 	"binary":             "string",
 	"varbinary":          "string",
+	"json":               "json.RawMessage",
 }
 
 type Table2Struct struct {
@@ -206,6 +208,11 @@ func (t *Table2Struct) Run() error {
 	var importContent string
 	if strings.Contains(structContent, "time.Time") {
 		importContent = "import \"time\"\n\n"
+	}
+
+	// 添加json类型支持
+	if strings.Contains(structContent, "json.RawMessage") {
+		importContent += "import \"encoding/json\"\n\n"
 	}
 
 	// 写入文件struct
