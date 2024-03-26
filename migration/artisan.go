@@ -1,7 +1,9 @@
 package main
 
+/*
 import (
 	"fmt"
+
 	"github.com/gohouse/gorose"
 )
 
@@ -18,6 +20,7 @@ var err error
 func init() {
 }
 func main() {
-	conn,err = gorose.Open("mysql", "gcore:gcore@tcp(192.168.200.248:3306)/test?charset=utf8")
-	fmt.Println(conn,err)
+	conn, err = gorose.Open("mysql", "gcore:gcore@tcp(192.168.200.248:3306)/test?charset=utf8")
+	fmt.Println(conn, err)
 }
+*/

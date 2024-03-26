@@ -7,12 +7,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-//map for converting mysql type to golang types
+// map for converting mysql type to golang types
 var typeForMysqlToGo = map[string]string{
 	"int":                "int64",
 	"integer":            "int64",
@@ -184,7 +185,13 @@ func (t *Table2Struct) Run() error {
 		*/
 		tableName = t.camelCase(tableName)
 		depth := 1
-		structContent += "type " + structName + " struct {\n"
+
+		if t.config.SeperatFile {
+			structContent = "type " + structName + " struct {\n"
+		} else {
+			structContent += "type " + structName + " struct {\n"
+		}
+
 		for _, v := range item {
 			//structContent += tab(depth) + v.ColumnName + " " + v.Type + " " + v.Json + "\n"
 			// 字段注释
@@ -205,8 +212,18 @@ func (t *Table2Struct) Run() error {
 				tab(depth), tableRealName)
 			structContent += "}\n\n"
 		}
+		// 开启单表单文件保存 文件名为表名
+		if t.config.SeperatFile {
+
+			saveResult(packageName, structContent, t, tableRealName)
+		}
 	}
 
+	if t.config.SeperatFile {
+		log.Println("gen model finish!!!")
+		return nil
+	}
+	
 	// 如果有引入 time.Time, 则需要引入 time 包
 	var importContent string
 	if strings.Contains(structContent, "time.Time") {
@@ -223,6 +240,10 @@ func (t *Table2Struct) Run() error {
 	// 是否指定保存路径
 	if savePath == "" {
 		savePath = "model.go"
+	}
+	
+	if fi, e := os.Stat(savePath); e == nil && fi.IsDir() {
+		savePath = filepath.Join(savePath, "model.go")
 	}
 	filePath := fmt.Sprintf("%s", savePath)
 	f, err := os.Create(filePath)
@@ -370,4 +391,30 @@ func (t *Table2Struct) camelCase(str string) string {
 }
 func tab(depth int) string {
 	return strings.Repeat("\t", depth)
+}
+
+func saveResult(packageName string, structContent string, t *Table2Struct, fileName string) error {
+	// 如果有引入 time.Time, 则需要引入 time 包
+	var importContent string
+	if strings.Contains(structContent, "time.Time") {
+		importContent = "import \"time\"\n\n"
+	}
+
+	// 写入文件struct
+	var savePath = t.savePath
+	// 是否指定保存路径
+	savePath = filepath.Join(savePath, fileName+".go")
+	filePath := fmt.Sprintf("%s", savePath)
+	f, err := os.Create(filePath)
+	if err != nil {
+		log.Println("Can not write file")
+		return err
+	}
+	defer f.Close()
+
+	f.WriteString(packageName + importContent + structContent)
+
+	cmd := exec.Command("gofmt", "-w", filePath)
+	cmd.Run()
+	return nil
 }
